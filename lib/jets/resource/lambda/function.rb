@@ -123,6 +123,7 @@ module Jets::Resource::Lambda
     def finalize_properties!(props)
       handler = full_handler(props)
       runtime = get_runtime(props)
+      description = get_descripton(props)
       managed = {
         handler: handler,
         runtime: runtime,
@@ -136,6 +137,8 @@ module Jets::Resource::Lambda
 
     def get_layers(runtime)
       return nil unless runtime =~ /^ruby/
+      return Jets.config.lambda.layers if Jets.config.gems.disable
+      
       ["!Ref GemLayer"] + Jets.config.lambda.layers
     end
 
@@ -147,7 +150,7 @@ module Jets::Resource::Lambda
       map = {
         node: "nodejs8.10",
         python: "python3.6",
-        ruby: "ruby2.5",
+        ruby: Jets.ruby_runtime,
       }
       map[@task.lang]
     end
@@ -202,7 +205,11 @@ module Jets::Resource::Lambda
       function_name.size > Jets::MAX_FUNCTION_NAME_SIZE ? nil : function_name
     end
 
-    def description
+    def get_descripton(props)
+      props[:description] || default_description
+    end
+      
+    def default_description
       # Example values:
       #   @app_class: Admin/PagesController
       #   @task.meth: index

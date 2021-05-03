@@ -10,7 +10,7 @@ module Jets::SpecHelpers::Controllers
     def event
       json = {}
       id_params = route.path.scan(%r{:([^/]+)}).flatten
-      expanded_path = path.dup
+      expanded_path = escape_path(path)
       path_parameters = {}
 
       id_params.each do |id_param|
@@ -19,25 +19,32 @@ module Jets::SpecHelpers::Controllers
         path_param_value = path_params[id_param.to_sym]
         raise "Path param :#{id_param} value cannot be blank" if path_param_value.blank?
 
-        expanded_path.gsub!(":#{id_param}", path_param_value.to_s)
-        path_parameters.deep_merge!(id_param => path_param_value.to_s)
+        escaped_path_param_value = CGI.escape(path_param_value.to_s)
+        expanded_path.gsub!(":#{id_param}", escaped_path_param_value)
+        path_parameters.deep_merge!(id_param => escaped_path_param_value)
       end
 
-      json['resource'] = path
+      json['resource'] = escape_path(path)
       json['path'] = expanded_path
       json['httpMethod'] = method.to_s.upcase
       json['pathParameters'] = path_parameters
       json['headers'] = (headers || {}).stringify_keys
 
       if method != :get
-        json['headers']['Content-Type'] = 'application/x-www-form-urlencoded'
-        body = Rack::Multipart.build_multipart(params.body_params)
+        json['headers']['Content-Type'] ||= 'application/x-www-form-urlencoded'
 
-        if body
+        if params.body_params.is_a? String
+          body = params.body_params
           json['headers']['Content-Length'] ||= body.length.to_s
-          json['headers']['Content-Type'] = "multipart/form-data; boundary=#{Rack::Multipart::MULTIPART_BOUNDARY}"
         else
-          body = Rack::Utils.build_nested_query(params.body_params)
+          body = Rack::Multipart.build_multipart(params.body_params)
+
+          if body
+            json['headers']['Content-Length'] ||= body.length.to_s
+            json['headers']['Content-Type'] = "multipart/form-data; boundary=#{Rack::Multipart::MULTIPART_BOUNDARY}"
+          else
+            body = Rack::Utils.build_nested_query(params.body_params)
+          end
         end
 
         json['body'] = Base64.encode64(body)
@@ -46,7 +53,7 @@ module Jets::SpecHelpers::Controllers
 
       params.query_params.each do |key, value|
         json['queryStringParameters'] ||= {}
-        json['queryStringParameters'][key.to_s] = value.to_s
+        json['queryStringParameters'][key.to_s] = value.deep_dup
       end
 
       json
@@ -83,6 +90,12 @@ module Jets::SpecHelpers::Controllers
       end
 
       Response.new(response) # converts APIGW hash to prettier object
+    end
+
+    private
+
+    def escape_path(path)
+      path.to_s.split('/').map { |s| s =~ /\A[:\*]/ ? s : CGI.escape(s) }.join('/')
     end
   end
 end

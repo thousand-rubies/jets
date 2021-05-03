@@ -1,6 +1,5 @@
 ---
 title: Installation
-nav_order: 7
 ---
 
 ## RubyGems
@@ -15,7 +14,10 @@ Jets works on macosx and linux variants. Jets does not work on windows.  For win
 
 ### Ruby
 
-Jets uses Ruby 2.5, and code written with patch variants of it should also work.
+Jets supports Ruby 2.5 and Ruby 2.7,
+which are the Ruby versions supported by AWS Lambda.
+Patch variants of it should work.
+More details: [Using Different Ruby Versions]({% link _docs/extras/ruby-versions.md %}).
 
 ### Yarn
 
@@ -54,12 +56,22 @@ Here are the instructions to install MySQL and PostgreSQL:
 
 ### AWS CLI
 
-The AWS CLI is required. You can install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/installing.html) via pip.
+The AWS CLI is required. You can install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/installing.html). Here's a few ways to install it.
 
     pip install awscli --upgrade --user
+
+Or with Homebrew on macOS:
+
+    brew install awscli
 
 Then [configure it](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html).
 
     aws configure
 
-{% include prev_next.md %}
+
+### IAM policy, group, and user
+
+The IAM user you use to run the `jets deploy` command
+needs a minimal set of IAM policies in order to deploy a Jets application.
+Follow the [Minimal Deploy Policy IAM Policy](/docs/extras/minimal-deploy-iam)
+to create the policy, group, and user. Use the user's credentials to configure the `aws-cli` above.

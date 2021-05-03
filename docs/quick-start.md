@@ -1,11 +1,12 @@
 ---
 title: Quick Start
-nav_order: 1
 ---
 
 In a hurry? No problem!  Here's a quick start to get going.
 
 ## Local Testing
+
+Review prerequisites on the [Install](/docs/install) page. Then:
 
     gem install jets
     jets new demo
@@ -47,4 +48,3 @@ Congratulations!  You have successfully deployed your serverless ruby applicatio
 
 Note: Make sure to also have the aws cli installed: [Install docs]({% link _docs/install.md %})
 
-{% include prev_next.md %}
